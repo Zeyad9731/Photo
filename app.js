@@ -63,36 +63,13 @@ const BOOKINGS = [
   }
 ];
 
-let currentPage = "home";
-const pageHistory = [];
-
-function goBackPage() {
-  const previous = pageHistory.pop() || "home";
-  showPage(previous, true);
-}
-
-function showPage(page, fromBack = false) {
-  if (!fromBack && page !== currentPage) pageHistory.push(currentPage);
-  currentPage = page;
+function showPage(page) {
   document.querySelectorAll(".page").forEach(el => el.classList.remove("active"));
   document.getElementById(page + "Page").classList.add("active");
   document.querySelectorAll(".nav-item").forEach(el => el.classList.toggle("active", el.dataset.page === page));
   document.getElementById("crumbTitle").textContent = ({home:"الرئيسية",players:"اللاعبون",bookings:"إحصائيات الحجوزات"})[page];
   if (page === "players") renderPlayers();
   if (page === "bookings") renderBooking();
-  // Add an in-page back button to every secondary page.
-  document.querySelectorAll(".page-back").forEach(button => button.remove());
-  if (page !== "home") {
-    const activeHead = document.querySelector(`#${page}Page .page-head`);
-    if (activeHead) {
-      const back = document.createElement("button");
-      back.className = "page-back";
-      back.type = "button";
-      back.innerHTML = "<span aria-hidden=\"true\">→</span> رجوع";
-      back.onclick = goBackPage;
-      activeHead.prepend(back);
-    }
-  }
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function esc(value) {
@@ -158,6 +135,6 @@ function renderBooking() {
   document.getElementById("bookingAssists").textContent = slots.reduce((s,p)=>s+(Number(p.assists)||0),0);
   const special = slots.filter(s=>Number(s.booking)>0 && s.name).sort((a,b)=>Number(b.booking)-Number(a.booking))[0];
   document.getElementById("bookingSpecial").textContent = special?.name || "—";
-  document.getElementById("bookingBody").innerHTML = slots.map((s,i)=>`<tr><td class="rank-col">${String(i+1).padStart(2,"0")}</td><td><span class="${s.name?'':'booking-empty'}">${s.name?esc(s.name):"— خانة فارغة —"}</span></td><td class="num-cell goal">${Number(s.goals)||0}</td><td class="num-cell assist">${Number(s.assists)||0}</td><td class="num-cell">${Number(s.booking)||0}</td></tr>`).join("");
+  document.getElementById("bookingBody").innerHTML = slots.map((s,i)=>{ const player = PLAYERS.find(p => p.name === s.name); const identity = s.name ? `<div class="player-cell">${player ? avatarHTML(player) : `<span class="avatar">${esc(s.name.trim().charAt(0))}</span>`}<span>${esc(s.name)}</span></div>` : "— خانة فارغة —"; return `<tr><td class="rank-col">${String(i+1).padStart(2,"0")}</td><td><span class="${s.name?'':'booking-empty'}">${identity}</span></td><td class="num-cell goal">${Number(s.goals)||0}</td><td class="num-cell assist">${Number(s.assists)||0}</td><td class="num-cell">${Number(s.booking)||0}</td></tr>`; }).join("");
 }
 renderHome(); renderPlayers(); renderBooking();
